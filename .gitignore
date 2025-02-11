@@ -1,0 +1,40 @@
+# IDE и редакторы
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+
+# Временные файлы
+*.log
+*.tmp
+*.temp
+.DS_Store
+Thumbs.db
+
+# Зависимости и пакеты
+/vendor/
+/node_modules/
+composer.lock
+package-lock.json
+
+# Файлы конфигурации
+.env
+config.local.php
+
+# Кэш и временные файлы WordPress
+*.cache
+/cache/
+/tmp/
+
+# Файлы сборки и компиляции
+/dist/
+/build/
+*.min.js
+*.min.css
+
+# Резервные копии
+*.bak
+*.backup
+*.old
+*.swp
+*~
