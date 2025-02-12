@@ -1,10 +1,10 @@
 <?php
 /**
  * Plugin Name: Simple Sphinx Search
- * Plugin URI: https://pravdaurfo.ru
+ * Plugin URI: https://github.com/aelph/simple-sphinx-search
  * Description: Простая и эффективная поисковая система на базе Sphinx
  * Plugin Tags: sphinx, search, plugin
- * Version: 1.0.0
+ * Version: 1.0.1
  * Author: Alex Elph
  * Text Domain: simple-sphinx-search
  * Domain Path: /languages
@@ -26,7 +26,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * Определяем константы плагина
  */
-define( 'SPHINX_SEARCH_VERSION', '1.0.0' );
+define( 'SPHINX_SEARCH_VERSION', '1.0.1' );
 define( 'SPHINX_SEARCH_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'SPHINX_SEARCH_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 
@@ -191,7 +191,7 @@ function sphinx_search_settings_init() {
 	add_settings_section(
 		'sphinx_search_connection',
 		'Настройки подключения',
-		'sphinx_search_connection_callback',
+		null,
 		'sphinx-search'
 	);
 
@@ -458,17 +458,22 @@ function sphinx_search_test_button() {
                     },
                     body: 'action=sphinx_test_connection&nonce=<?php echo $nonce; ?>'
                 })
-                .then(response => response.json())
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
                 .then(data => {
                     if (data.success) {
-                        result.innerHTML = '<span style=\'color: green\'>' + data.data + '</span>';
+                        result.innerHTML = '<span style=\'color: green\'>' + (data.data || 'Подключение успешно') + '</span>';
                     } else {
-                        result.innerHTML = '<span style=\'color: red\'>' + data.data + '</span>';
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                result.innerHTML = '<span style=\'color: red\'>Ошибка при выполнении запроса</span>';
+                        result.innerHTML = '<span style=\'color: red\'>' + (data.data || 'Ошибка подключения') + '</span>';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    result.innerHTML = '<span style=\'color: red\'>Ошибка при выполнении запроса: ' + error.message + '</span>';
                 })
                 .finally(() => {
                     button.disabled = false;
@@ -635,23 +640,24 @@ function sphinx_search_page() {
 
 /**
  * Функция обратного вызова для проверки подключения к Sphinx
+ * осталась от предыдущей версии
  */
-function sphinx_search_connection_callback() {
-    $options = get_option('sphinx_search_options');
-    $host = isset($options['sphinx_host']) ? $options['sphinx_host'] : '127.0.0.1';
-    $port = isset($options['sphinx_port']) ? $options['sphinx_port'] : '9306';
+// function sphinx_search_connection_callback() {
+//     $options = get_option('sphinx_search_options');
+//     $host = isset($options['sphinx_host']) ? $options['sphinx_host'] : '127.0.0.1';
+//     $port = isset($options['sphinx_port']) ? $options['sphinx_port'] : '9306';
     
-    try {
-        $conn = mysqli_connect($host, '', '', '', $port);
-        if ($conn) {
-            mysqli_close($conn);
-            return true;
-        }
-    } catch (Exception $e) {
-        return false;
-    }
-    return false;
-}
+//     try {
+//         $conn = mysqli_connect($host, '', '', '', $port);
+//         if ($conn) {
+//             mysqli_close($conn);
+//             return true;
+//         }
+//     } catch (Exception $e) {
+//         return false;
+//     }
+//     return false;
+// }
 
 // Регистрируем шорткод
 add_shortcode('sphinx_search', 'sphinx_search_page');
@@ -663,3 +669,13 @@ function sphinx_search_plugin_action_links($links) {
     return $links;
 }
 add_filter('plugin_action_links_' . plugin_basename(__FILE__), 'sphinx_search_plugin_action_links');
+
+/**
+ * Регистрируем шорткод [sphinx_search]
+ */
+function sphinx_search_shortcode($atts) {
+    ob_start();
+    sphinx_search_page();
+    return ob_get_clean();
+}
+add_shortcode('sphinx_search', 'sphinx_search_shortcode');
